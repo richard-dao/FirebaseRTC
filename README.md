@@ -1,3 +1,5 @@
 # FirebaseRTC
-Playing around with FirebaseRTC. Find original repository here: https://github.com/webrtc/FirebaseRTC
+Playing around with FirebaseRTC. 
+<br>
+Find original repository here: https://github.com/webrtc/FirebaseRTC
 

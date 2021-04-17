@@ -26,6 +26,7 @@ function init() {
   roomDialog = new mdc.dialog.MDCDialog(document.querySelector('#room-dialog'));
 }
 
+let role;
 async function createRoom() {
   document.querySelector('#createBtn').disabled = true;
   document.querySelector('#joinBtn').disabled = true;
@@ -102,6 +103,15 @@ async function createRoom() {
     });
   });
   // Listen for remote ICE candidates above
+
+  const usersInfo = roomRef.collection('userInfo');
+  const remoteNameDOM = document.getElementById('remoteNameDOM');
+  role = "creator";
+  usersInfo.doc('creator').set({
+    creatorName: localName,
+  })
+  
+
 }
 
 function joinRoom() {
@@ -182,6 +192,26 @@ async function joinRoomById(roomId) {
     });
     // Listening for remote ICE candidates above
   }
+  
+
+  const usersInfo = roomRef.collection('userInfo');
+  const remoteNameDOM = document.getElementById('remoteName');
+  
+  usersInfo.doc('joiner').set({
+    joinerName: localName
+  })
+  usersInfo.onSnapshot(snapshot => {
+    snapshot.docChanges().forEach(async change => {
+      if (change.type === 'added'){
+        if (change.doc.id == "creator"){
+          let data = await change.doc.data().creatorName;
+          remoteNameDOM.innerHTML = `${data} (Other)`;
+        }
+      }
+    })
+  })
+
+
 }
 
 async function openUserMedia(e) {
@@ -286,15 +316,45 @@ function logOut(){
     })
 }
 
-document.addEventListener("DOMContentLoaded", event => {
+const localNameDOM = document.getElementById('localName');
+
+let localID;
+let localName;
+document.addEventListener("DOMContentLoaded", async event => {
   firebase.auth().onAuthStateChanged(user => {
     if (user){
       sect0.style.display = "none";
       sect1.style.display = "block";
+      localID = user.uid;
+      localName = user.displayName;
+      localNameDOM.innerHTML = `${localName} (You)`;
+
     }
     else{
       sect0.style.display = "block";
       sect1.style.display = "none";
     }
   })
+  const db = firebase.firestore();
+  const roomRef = await db.collection('rooms');
+  const remoteNameDOM = document.getElementById('remoteName');
+  roomRef.onSnapshot(snapshot => {
+    snapshot.docChanges().forEach(async change => {
+      if (roomId != null){
+        if (role == "creator"){
+          const usersInfo = await roomRef.doc(roomId).collection('userInfo');
+          usersInfo.doc('joiner').get().then((doc) => {
+            remoteNameDOM.innerHTML = `${doc.data().joinerName} (Other)`;
+          })
+
+
+        }
+      }
+
+
+    })
+  })
 })
+
+
+

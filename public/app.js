@@ -110,8 +110,44 @@ async function createRoom() {
   usersInfo.doc('creator').set({
     creatorName: localName,
   })
-  
+  if (roomId != null){
+    const db = firebase.firestore();
+    const userInfoRef = db.collection('rooms').doc(roomId).collection('userInfo');
+    const remoteNameDOM = document.getElementById('remoteName');
+    const chatNameDOM = document.getElementById('title');
+    userInfoRef.onSnapshot(snapshot => {
+      snapshot.docChanges().forEach(async change => {
+        if (change.type == 'added'){
+          if (change.doc.id == 'joiner'){
+            let data = change.doc.data().joinerName;
+            remoteNameDOM.innerHTML = `${data} (Other)`;
+            chatNameDOM.innerHTML = `Chatting with ${data}`;
+          }
+        }
+      })
+    })
+    
+  }
 
+
+
+
+  // Message Updater
+  if (roomId != null){
+    const db = firebase.firestore();
+    const chatsRef = await db.collection('rooms').doc(roomId).collection('messages');
+    const query = chatsRef.orderBy('createdAt');
+    chatsRef.onSnapshot(snapshot => {
+      snapshot.docChanges().forEach(async change => {
+        if (change.type === 'added'){
+          let data = change.doc.data();
+          if (data.userID != localID){
+            send_Message(data.message, "left", data.userPhoto);
+          }
+        }
+      })
+    })
+  }
 }
 
 function joinRoom() {
@@ -196,7 +232,7 @@ async function joinRoomById(roomId) {
 
   const usersInfo = roomRef.collection('userInfo');
   const remoteNameDOM = document.getElementById('remoteName');
-  
+  const chatNameDOM = document.getElementById('title');
   usersInfo.doc('joiner').set({
     joinerName: localName
   })
@@ -206,12 +242,27 @@ async function joinRoomById(roomId) {
         if (change.doc.id == "creator"){
           let data = await change.doc.data().creatorName;
           remoteNameDOM.innerHTML = `${data} (Other)`;
+          chatNameDOM.innerHTML = `Chatting with ${data}`;
         }
       }
     })
   })
 
-
+  if (roomId != null){
+    const db = firebase.firestore();
+    const chatsRef = await db.collection('rooms').doc(roomId).collection('messages');
+    const query = chatsRef.orderBy('createdAt');
+    chatsRef.onSnapshot(snapshot => {
+      snapshot.docChanges().forEach(async change => {
+        if (change.type === 'added'){
+          let data = change.doc.data();
+          if (data.userID != localID){
+            send_Message(data.message, "left", data.userPhoto);
+          }
+        }
+      })
+    })
+  }
 }
 
 async function openUserMedia(e) {
@@ -320,6 +371,8 @@ const localNameDOM = document.getElementById('localName');
 
 let localID;
 let localName;
+let localPhoto;
+let remoteUser;
 document.addEventListener("DOMContentLoaded", async event => {
   firebase.auth().onAuthStateChanged(user => {
     if (user){
@@ -327,6 +380,7 @@ document.addEventListener("DOMContentLoaded", async event => {
       sect1.style.display = "block";
       localID = user.uid;
       localName = user.displayName;
+      localPhoto = user.photoURL;
       localNameDOM.innerHTML = `${localName} (You)`;
 
     }
@@ -335,26 +389,133 @@ document.addEventListener("DOMContentLoaded", async event => {
       sect1.style.display = "none";
     }
   })
-  const db = firebase.firestore();
-  const roomRef = await db.collection('rooms');
-  const remoteNameDOM = document.getElementById('remoteName');
-  roomRef.onSnapshot(snapshot => {
-    snapshot.docChanges().forEach(async change => {
-      if (roomId != null){
-        if (role == "creator"){
-          const usersInfo = await roomRef.doc(roomId).collection('userInfo');
-          usersInfo.doc('joiner').get().then((doc) => {
-            remoteNameDOM.innerHTML = `${doc.data().joinerName} (Other)`;
-          })
-
-
-        }
-      }
-
-
-    })
-  })
+  
+  
 })
 
+
+// Live-Chat
+
+  // Message Object
+  var Message;
+  Message = function (arg) {
+      this.text = arg.text, this.message_side = arg.message_side;
+      this.draw = function (_this) {
+          return function () {
+              var $message;
+              $message = $($('.message_template').clone().html());
+              $message.addClass(_this.message_side).find('.text').html(_this.text);
+              $('.messages').append($message);
+              return setTimeout(function () {
+                  return $message.addClass('appeared');
+              }, 0);
+          };
+      }(this);
+      return this;
+  };
+  var Message2;
+  Message2 = function (arg) {
+    this.text = arg.text, this.message_side = arg.message_side;
+    this.draw = function (_this) {
+        return function () {
+            let $message;
+            $message = $($('.message_template_remote').clone().html());
+            $message.addClass(_this.message_side).find('.text').html(_this.text);
+            $('.messages').append($message);
+            return setTimeout(function () {
+                return $message.addClass('appeared');
+            }, 0);
+        };
+    }(this);
+    return this;
+};
+  
+  $(async function () {
+    // Grabs comment
+      var getMessageText, sendMessage;
+      getMessageText = function () {
+          var $message_input;
+          $message_input = $('.message_input');
+          return $message_input.val();
+      };
+      // Updates messages
+      sendMessage = await async function (text, message_side) { // NOTE: make sure to check if roomId exists yet (if they have either joined or created a room)
+          if (roomId != null){
+            var $messages, message;
+            if (text.trim() === '') {
+                return;
+            }
+            $('.message_input').val('');
+            $messages = $('.messages');
+            message_side = message_side === 'left' ? 'left' : 'right';
+
+            // Create message document in Firebase
+            if (message_side == 'right'){
+              const db = firebase.firestore();
+              const chatRef = await db.collection('rooms').doc(roomId).collection('messages');
+              const { serverTimestamp } = firebase.firestore.FieldValue;
+              chatRef.add({
+                userID: localID,
+                createdAt: serverTimestamp(),
+                message: text,
+                userPhoto: localPhoto
+              })
+            }
+            
+            // Create physical message object and update screen
+            message = new Message({
+                text: text,
+                message_side: message_side
+            });
+            let style = document.createElement("style");
+            style.id = "style";
+            style.type = "text/css";
+            document.head.appendChild(style);
+            let main = style.sheet;
+            main.insertRule(`.avatar_right {background: url(${localPhoto}) top 0% center;}`);
+            message.draw();
+            return $messages.animate({ scrollTop: $messages.prop('scrollHeight') }, 300);
+          }
+      };
+
+      // Event Listeners
+      $('.send_message').click(function (e) {
+          return sendMessage(getMessageText(), "right");
+      });
+      $('.message_input').keyup(function (e) {
+          if (e.which === 13) {
+              return sendMessage(getMessageText());
+          }
+      });
+  });
+
+  async function send_Message(text, message_side, remotePhoto) { // NOTE: make sure to check if roomId exists yet (if they have either joined or created a room)
+    if (roomId != null){
+      var $messages, message;
+      if (text.trim() === '') {
+          return;
+      }
+      $('.message_input').val('');
+      $messages = $('.messages');
+      message_side = message_side === 'left' ? 'left' : 'right';
+
+      // Create message document in Firebase
+
+      // Create physical message object and update screen
+      message = new Message2({
+          text: text,
+          message_side: message_side
+      });
+      let style = document.createElement("style");
+      style.id = "style";
+      style.type = "text/css";
+      document.head.appendChild(style);
+      let main = style.sheet;
+      main.insertRule(`.avatar_left {background: url(${remotePhoto}) top 0% center;}`);
+      
+      message.draw();
+      return $messages.animate({ scrollTop: $messages.prop('scrollHeight') }, 300);
+    }
+};
 
 

@@ -129,9 +129,6 @@ async function createRoom() {
     
   }
 
-
-
-
   // Message Updater
   if (roomId != null){
     const db = firebase.firestore();
@@ -352,7 +349,7 @@ signInBtn.onclick = () => googleLogin();
 signOutBtn.onclick = () => logOut();
 
 function googleLogin(){
-  const provider = new firebase.auth.GoogleAuthProvider();
+  const provider = new firebase.auth.FacebookAuthProvider();
 
   firebase.auth().signInWithPopup(provider)
     .then(function() {
@@ -495,7 +492,6 @@ document.addEventListener("DOMContentLoaded", async event => {
       if (text.trim() === '') {
           return;
       }
-      $('.message_input').val('');
       $messages = $('.messages');
       message_side = message_side === 'left' ? 'left' : 'right';
 
@@ -518,4 +514,19 @@ document.addEventListener("DOMContentLoaded", async event => {
     }
 };
 
+const videoRemote = document.getElementById('remoteVideo');
+const muteButton = document.getElementById('mute');
+muteButton.onclick = () => mute();
+function mute(){
+  console.log("Working?");
+  console.log(muteButton.textContent);
+  if (muteButton.textContent == "Mute"){
+    videoRemote.setAttribute('muted', 'muted');
+    muteButton.innerHTML = `Unmute`;
+  }
+  else{
+    videoRemote.removeAttribute('muted');
+    muteButton.innerHTML = `Mute`;
+  }
+}
 

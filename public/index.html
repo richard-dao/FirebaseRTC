@@ -3,23 +3,43 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Welcome to FirebaseRTC</title>
+    <title>Ptrfamily's FirebaseRTC</title>
     <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
     <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <!-- update the version number as needed -->
-    <script defer src="/__/firebase/7.13.1/firebase-app.js"></script>
-    <!-- include only the Firebase features as you need -->
-    <script defer src="/__/firebase/7.13.1/firebase-auth.js"></script>
-    <script defer src="/__/firebase/7.13.1/firebase-firestore.js"></script>
-    <!-- initialize the SDK after all desired features are loaded -->
-    <script defer src="/__/firebase/init.js"></script>
 
-    <link rel="stylesheet" type="text/css" href="main.css">
+    <script src="https://www.gstatic.com/firebasejs/7.13.1/firebase-app.js"></script>
+
+<!-- TODO: Add SDKs for Firebase products that you want to use
+     https://firebase.google.com/docs/web/setup#available-libraries -->
+<script src="https://www.gstatic.com/firebasejs/7.13.1/firebase-analytics.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.13.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.13.1/firebase-firestore.js"></script>
+
+<script>
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  var firebaseConfig = {
+    apiKey: "AIzaSyByt5_uKUAApeu3urbdtYw6WNGiNhHLaZU",
+    authDomain: "fir-rtc-ptrfamily.firebaseapp.com",
+    databaseURL: "https://fir-rtc-ptrfamily-default-rtdb.firebaseio.com",
+    projectId: "fir-rtc-ptrfamily",
+    storageBucket: "fir-rtc-ptrfamily.appspot.com",
+    messagingSenderId: "858910661077",
+    appId: "1:858910661077:web:27840ac89510ed9a49855c",
+    measurementId: "G-J8JETBEK58"
+  };
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  firebase.analytics();
+</script>
+
+    <link rel="stylesheet" type="text/css" href="index.css">
 </head>
 <body>
-<h1>Playing Around with FirebaseRTC</h1>
+<h1>Ptrfamily's FirebaseRTC</h1>
 <div id="section0" style="display: block">
     <button id="signIn" class="btn btn-primary">Sign In</button>
 </div>
@@ -48,7 +68,7 @@
 </div>
 <div id="videos">
     <video id="localVideo" muted autoplay playsinline></video><h3 id="localName">Local Name</h3>
-    <video id="remoteVideo" autoplay playsinline></video><h3 id="remoteName">Remote Name</h3>
+    <video id="remoteVideo" autoplay playsinline></video><h3 id="remoteName">Waiting for Person to Join...</h3><button class="btn btn-primary" style="margin: 1.25em" id="mute">Mute</button>
 </div>
 <!-- Live Chat Feature -->
 <div class="chat_window">

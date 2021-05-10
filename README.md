@@ -1,6 +1,6 @@
 # FirebaseRTC Playground
 <br>
-Electron App using Firebase and WebRTC (see releases for latest App download) 
+Electron Video-Chat App using Firebase and WebRTC (see releases for latest App download) 
 <br>
 Or
 <br>
